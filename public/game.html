@@ -1,0 +1,397 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>RPS — Game</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+  <style>
+    :root{
+      --bg1:#071025; --bg2:#0b1220; --accent:#7c5cff; --accent2:#00c2ff;
+      --muted:rgba(255,255,255,0.8)
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:
+      radial-gradient(600px 300px at 10% 10%, rgba(124,92,255,0.08), transparent),
+      linear-gradient(180deg,var(--bg1),var(--bg2));font-family:system-ui,-apple-system,Segoe UI,Roboto;color:#fff;display:flex;flex-direction:column}
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.03)}
+    .room{font-size:14px;opacity:.9}
+    .players{display:flex;justify-content:space-between;align-items:center;padding:14px}
+    .playerBox{display:flex;flex-direction:column;align-items:center;width:45%}
+    .avatar{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;margin-bottom:8px}
+    .name{font-weight:700}
+    .score{font-size:13px;opacity:.9}
+    .emojiPopup{min-height:28px;display:flex;align-items:center;justify-content:center;margin-top:6px;pointer-events:none}
+    /* center zone */
+    .center{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 12px}
+    .circle{width:180px;height:180px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.02);border:6px solid rgba(255,255,255,0.03);box-shadow:0 12px 36px rgba(1,6,20,0.6);transition:transform .28s, background .28s, border-color .28s}
+    .circle.bigText{font-size:20px;font-weight:800}
+    .status{margin-top:12px;opacity:.9}
+    .controls{display:flex;gap:10px;margin-top:12px}
+    .btn{padding:10px 14px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#06101b;font-weight:700;cursor:pointer}
+    .btn-muted{background:transparent;border:1px solid rgba(255,255,255,0.04);color:#fff}
+    /* choices */
+    .choices{display:flex;gap:12px;justify-content:center;margin:18px 12px}
+    .choice{width:86px;height:86px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;transition:transform .12s, box-shadow .12s}
+    .choice.selected{transform:translateY(-6px);box-shadow:0 12px 30px rgba(0,0,0,0.6)}
+    /* emoji bar bottom */
+    .emojiBar{position:fixed;left:50%;transform:translateX(-50%);bottom:12px;background:rgba(0,0,0,0.28);padding:8px;border-radius:40px;display:flex;gap:8px;backdrop-filter: blur(6px);z-index:80}
+    .emojiBtn{background:transparent;border:none;font-size:20px;padding:8px;cursor:pointer}
+    /* floating emoji */
+    .float{position:absolute;pointer-events:none;font-size:30px;opacity:1;animation:floatUp 1600ms ease-out forwards}
+    @keyframes floatUp{
+      0%{transform:translateY(0) scale(1);opacity:1}
+      30%{transform:translateY(-18px) scale(1.15)}
+      100%{transform:translateY(-120px) scale(.8);opacity:0}
+    }
+    /* small screens adjustments */
+    @media (max-width:520px){
+      .circle{width:140px;height:140px}
+      .avatar{width:52px;height:52px;font-size:15px}
+      .choice{width:70px;height:70px;font-size:24px}
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div>
+      <div style="font-weight:700">🪨📄✂️ RPS — Online</div>
+      <div class="room" id="roomLabel"></div>
+    </div>
+    <div style="text-align:right">
+      <div id="meLabel" style="font-weight:700"></div>
+      <div style="font-size:12px;opacity:.9">Tap emoji to react</div>
+    </div>
+  </div>
+
+  <div class="players">
+    <div class="playerBox" id="leftBox">
+      <div class="avatar" id="leftAvatar">A</div>
+      <div class="name" id="leftName">Waiting...</div>
+      <div class="score" id="leftScore">Score: 0</div>
+      <div class="emojiPopup" id="leftEmoji"></div>
+    </div>
+
+    <div class="playerBox" id="rightBox">
+      <div class="avatar" id="rightAvatar" style="background:linear-gradient(135deg,#00c2ff,#7c5cff)">B</div>
+      <div class="name" id="rightName">Waiting...</div>
+      <div class="score" id="rightScore">Score: 0</div>
+      <div class="emojiPopup" id="rightEmoji"></div>
+    </div>
+  </div>
+
+  <div class="center">
+    <div class="circle" id="resultCircle"><div id="circleText" style="text-align:center">—</div></div>
+    <div class="status" id="status">Waiting for players...</div>
+
+    <div class="controls">
+      <button id="readyBtn" class="btn btn-muted">Ready ✅</button>
+      <button id="leaveBtn" class="btn">Leave</button>
+    </div>
+
+    <div class="choices" id="choices" style="display:none">
+      <div class="choice" data-choice="stone">🪨<div style="font-size:12px">Stone</div></div>
+      <div class="choice" data-choice="paper">📄<div style="font-size:12px">Paper</div></div>
+      <div class="choice" data-choice="scissor">✂️<div style="font-size:12px">Scissor</div></div>
+    </div>
+  </div>
+
+  <div class="emojiBar" id="emojiBar"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // --- setup ---
+    const socket = io();
+
+    const params = new URLSearchParams(location.search);
+    const name = params.get('name') || ('Player' + Math.floor(Math.random()*99));
+    const room = params.get('room') || null;
+    const leftNameEl = document.getElementById('leftName'), rightNameEl = document.getElementById('rightName');
+    const leftScoreEl = document.getElementById('leftScore'), rightScoreEl = document.getElementById('rightScore');
+    const leftAvatar = document.getElementById('leftAvatar'), rightAvatar = document.getElementById('rightAvatar');
+    const leftEmoji = document.getElementById('leftEmoji'), rightEmoji = document.getElementById('rightEmoji');
+    const roomLabel = document.getElementById('roomLabel'), meLabel = document.getElementById('meLabel');
+    const readyBtn = document.getElementById('readyBtn'), leaveBtn = document.getElementById('leaveBtn');
+    const choicesWrap = document.getElementById('choices'), choiceBtns = document.querySelectorAll('.choice');
+    const statusEl = document.getElementById('status');
+    const resultCircle = document.getElementById('resultCircle'), circleText = document.getElementById('circleText');
+
+    // Emojis
+    const EMOJIS = ['😂','😎','🥳','😡','😭','😜','🤣','🙌','👊','🤯','🫡','🤝','🔥','💥'];
+    const emojiBar = document.getElementById('emojiBar');
+    let lastEmojiAt = 0, EMOJI_COOLDOWN = 800;
+
+    let myId = null;
+    let players = []; // [{id,name,ready,score}, ...]
+    let chosen = false;
+    let countdown = null;
+    let localSelected = null;
+
+    // If no room provided show message & link back
+    if(!room) {
+      document.body.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;color:#fff;font-family:system-ui;font-size:18px;flex-direction:column">' +
+        '<div style="margin-bottom:12px">No room available — pass ?room=ROOMNAME in URL or go back to join page.</div>' +
+        '<a href="/" style="color:#fff;padding:10px 14px;border-radius:8px;background:#7c5cff;text-decoration:none">Back to Join</a></div>';
+      throw new Error('No room param');
+    }
+
+    roomLabel.textContent = 'Room: ' + room;
+    meLabel.textContent = name;
+
+    // build emoji bar
+    EMOJIS.forEach(e=>{
+      const b = document.createElement('button');
+      b.className = 'emojiBtn';
+      b.innerText = e;
+      b.onclick = () => {
+        const now = Date.now();
+        if (now - lastEmojiAt < EMOJI_COOLDOWN) return;
+        lastEmojiAt = now;
+        socket.emit('send_emoji', { roomId: room, emoji: e });
+      };
+      emojiBar.appendChild(b);
+    });
+
+    // floating emoji spawner
+    function spawnFloat(emoji, targetEl) {
+      if(!targetEl) return;
+      const r = targetEl.getBoundingClientRect();
+      const el = document.createElement('div');
+      el.className = 'float';
+      el.style.left = (r.left + r.width/2) + 'px';
+      el.style.top = (r.top - 8) + 'px';
+      el.style.transform = 'translate(-50%,0)';
+      el.innerText = emoji;
+      document.body.appendChild(el);
+      setTimeout(()=> el.remove(), 1600);
+    }
+
+    // join
+    socket.on('connect', () => {
+      myId = socket.id;
+      socket.emit('join-room', { roomId: room, name });
+      statusEl.textContent = 'Connected — waiting for players...';
+    });
+
+    socket.on('no-room', () => {
+      alert('No room specified or invalid room. Go back and enter a room code.');
+      location.href = '/';
+    });
+
+    socket.on('update-players', ({ players: list }) => {
+      players = list;
+      // display players in left/right slots based on order
+      const p0 = players[0], p1 = players[1];
+      if(p0) {
+        leftNameEl.textContent = p0.name;
+        leftScoreEl.textContent = 'Score: ' + (p0.score || 0);
+        leftAvatar.textContent = p0.name.slice(0,2).toUpperCase();
+        leftEmoji.innerHTML = '';
+        if(p0.ready) leftEmoji.innerHTML = '<div style="font-size:13px;color:#9fb2ff">Ready</div>';
+      } else {
+        leftNameEl.textContent = 'Waiting...';
+        leftScoreEl.textContent = 'Score: 0';
+        leftAvatar.textContent = 'A';
+        leftEmoji.innerHTML = '';
+      }
+      if(p1) {
+        rightNameEl.textContent = p1.name;
+        rightScoreEl.textContent = 'Score: ' + (p1.score || 0);
+        rightAvatar.textContent = p1.name.slice(0,2).toUpperCase();
+        rightEmoji.innerHTML = '';
+        if(p1.ready) rightEmoji.innerHTML = '<div style="font-size:13px;color:#9fb2ff">Ready</div>';
+      } else {
+        rightNameEl.textContent = 'Waiting...';
+        rightScoreEl.textContent = 'Score: 0';
+        rightAvatar.textContent = 'B';
+        rightEmoji.innerHTML = '';
+      }
+
+      // update status
+      if(players.length < 2) {
+        statusEl.textContent = 'Waiting for opponent to join...';
+        readyBtn.disabled = false;
+        choicesWrap.style.display = 'none';
+      } else {
+        // show ready prompt
+        statusEl.textContent = 'Both players present — click Ready to begin';
+      }
+    });
+
+    socket.on('start-countdown', ({ seconds }) => {
+      // show choices and start local countdown
+      chosen = false;
+      localSelected = null;
+      choiceBtns.forEach(b => b.classList.remove('selected'));
+      choicesWrap.style.display = 'flex';
+      readyBtn.disabled = true;
+      statusEl.textContent = 'Round started — choose your move!';
+      startLocalCountdown(seconds);
+      circleText.textContent = '';
+      resultCircle.style.background = 'rgba(255,255,255,0.02)';
+      resultCircle.style.borderColor = 'rgba(255,255,255,0.03)';
+    });
+
+    socket.on('round-result', (res) => {
+      // res: { text, winnerId?, draw?, winnerName?, choices:{...}, scores:{...} }
+      clearInterval(countdown);
+      choicesWrap.style.display = 'none';
+      readyBtn.disabled = false;
+      readyBtn.textContent = 'Ready ✅';
+      statusEl.textContent = res.text || 'Round over';
+
+      // update scores display
+      if(res.scores) {
+        // match by name
+        leftScoreEl.textContent = 'Score: ' + (res.scores[leftNameEl.textContent] ?? leftScoreEl.textContent.split(': ')[1]);
+        rightScoreEl.textContent = 'Score: ' + (res.scores[rightNameEl.textContent] ?? rightScoreEl.textContent.split(': ')[1]);
+      }
+
+      // show choices briefly by marking selection
+      if(res.choices) {
+        // not strictly necessary visually, but we can show small clones
+        const lChoice = res.choices[leftNameEl.textContent];
+        const rChoice = res.choices[rightNameEl.textContent];
+        showChoicePop(lChoice, leftAvatar);
+        showChoicePop(rChoice, rightAvatar);
+      }
+
+      // show winner inside circle
+      if(res.draw) {
+        // draw -> red circle with "Draw"
+        resultCircle.style.background = '#ff4d4f';
+        resultCircle.style.borderColor = '#ff4d4f';
+        circleText.innerHTML = '<div style="font-weight:800;font-size:18px">Draw</div>';
+      } else if (res.winnerName) {
+        resultCircle.style.background = '#29a745'; // green
+        resultCircle.style.borderColor = '#29a745';
+        circleText.innerHTML = `<div style="font-weight:900;font-size:18px">${res.winnerName}</div>`;
+      } else {
+        // fallback
+        resultCircle.style.background = 'rgba(255,255,255,0.02)';
+        resultCircle.style.borderColor = 'rgba(255,255,255,0.03)';
+        circleText.textContent = res.text || 'Round over';
+      }
+    });
+
+    socket.on('receive_emoji', ({ id, name: fromName, emoji }) => {
+      // find which side to spawn above
+      let target = null;
+      if(players[0] && players[0].id === id) target = leftEmoji;
+      else if(players[1] && players[1].id === id) target = rightEmoji;
+      else {
+        // if not in positions, pick left by default
+        target = leftEmoji;
+      }
+
+      // show text name + emoji above (short-lived)
+      if(target) {
+        target.innerHTML = `<div style="font-size:14px;opacity:1">${fromName} ${emoji}</div>`;
+        // spawn floating emoji at avatar for fun
+        const avatarEl = (target === leftEmoji) ? leftAvatar : rightAvatar;
+        spawnFloatAt(emoji, avatarEl);
+        setTimeout(()=> {
+          // clear ready label if was present, else clear emoji
+          // Do not override the Ready label if present
+          const p = players[0] && players[0].id === id ? players[0] : (players[1] && players[1].id === id ? players[1] : null);
+          if(p && p.ready) target.innerHTML = '<div style="font-size:13px;color:#9fb2ff">Ready</div>';
+          else target.innerHTML = '';
+        }, 1800);
+      }
+    });
+
+    socket.on('player-left', ({ id, name }) => {
+      statusEl.textContent = `${name} left the room. Waiting for player...`;
+      choicesWrap.style.display = 'none';
+      readyBtn.disabled = false;
+      circleText.textContent = '';
+      resultCircle.style.background = 'rgba(255,255,255,0.02)';
+    });
+
+    // leave
+    leaveBtn.onclick = () => {
+      location.href = '/';
+    };
+
+    // ready button
+    readyBtn.onclick = () => {
+      readyBtn.disabled = true;
+      readyBtn.textContent = 'Waiting...';
+      socket.emit('player-ready', { roomId: room });
+    };
+
+    // choice selection
+    choiceBtns.forEach(b => {
+      b.onclick = () => {
+        if(chosen) return;
+        chosen = true;
+        choiceBtns.forEach(x => x.classList.remove('selected'));
+        b.classList.add('selected');
+        localSelected = b.dataset.choice;
+        socket.emit('player-choice', { roomId: room, choice: localSelected });
+        statusEl.textContent = 'You chose ' + localSelected;
+      };
+    });
+
+    // helper: show choice pop next to avatar
+    function showChoicePop(choice, avatarEl) {
+      if(!choice || !avatarEl) return;
+      const pop = document.createElement('div');
+      pop.style.position = 'absolute';
+      const r = avatarEl.getBoundingClientRect();
+      pop.style.left = (r.left + r.width/2 - 30) + 'px';
+      pop.style.top = (r.top + r.height/2 - 30) + 'px';
+      pop.style.width = '60px'; pop.style.height = '60px';
+      pop.style.borderRadius = '8px';
+      pop.style.display = 'flex'; pop.style.alignItems = 'center'; pop.style.justifyContent = 'center';
+      pop.style.background = 'rgba(255,255,255,0.02)'; pop.style.color = '#fff';
+      pop.style.zIndex = 999;
+      pop.style.fontSize = '24px';
+      pop.innerText = choice === 'stone' ? '🪨' : (choice === 'paper' ? '📄' : '✂️');
+      document.body.appendChild(pop);
+      setTimeout(()=> pop.remove(), 1200);
+    }
+
+    // spawn floating emoji at avatar
+    function spawnFloatAt(emoji, avatarEl) {
+      if(!avatarEl) return;
+      const rect = avatarEl.getBoundingClientRect();
+      const el = document.createElement('div');
+      el.className = 'float';
+      el.style.left = (rect.left + rect.width/2) + 'px';
+      el.style.top = (rect.top - 8) + 'px';
+      el.style.transform = 'translate(-50%,0)';
+      el.innerText = emoji;
+      document.body.appendChild(el);
+      setTimeout(()=> el.remove(), 1600);
+    }
+
+    // local countdown UI (client-side)
+    function startLocalCountdown(seconds) {
+      let sec = seconds;
+      clearInterval(countdown);
+      countdown = setInterval(() => {
+        if(sec <= 0) {
+          clearInterval(countdown);
+          // if not chosen, default to 'stone' per rules
+          if(!chosen) {
+            socket.emit('player-choice', { roomId: room, choice: 'stone' }); // default
+            chosen = true;
+            statusEl.textContent = 'No choice — default Stone submitted';
+          }
+          return;
+        }
+        circleText.innerText = sec;
+        sec--;
+      }, 1000);
+    }
+
+    // helper: update displayed scores if update via server
+    // (server sends scores in round-result above)
+
+    // keyboard/mobile: attempt to keep UI responsive
+    // initial UI states
+    circleText.innerText = '—';
+    readyBtn.textContent = 'Ready ✅';
+  </script>
+</body>
+</html>
