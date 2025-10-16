@@ -321,7 +321,7 @@
     const resultCircle = document.getElementById('resultCircle'), circleText = document.getElementById('circleText');
 
     // Emojis
-    const EMOJIS = ['😂', '😴😴', '🫸', '🫷', '🫶', '☠️', '🫣', '🤥', '🫥', '🫢', '😣', '😝', '😆', '🤪', '😶‍🌫️', '😩', '😈', '😨', '🥳', '🤭', '🤨', '🥰', '👻', '😁😁', '😎', '🥳', '😡', '😭', '😜', '🤣', '🙌', '👊', '🤯', '🫡', '🤝', '🔥', '💥', '🥻', '🥼'];
+    const EMOJIS = ['😂', '🧣', '👖', '🧤', '🩲', '🧦', '👙', '🩱', '👕', '🧥', '🥋', '🎽', '🥋', '🧦', '🧤', '🧣', '👖', '👕', '🎽', '👚', '👔', '👗', '👘', '🥻', '🩳', '🩲', '🧥', '🥼', '🦺', '🧢', '👒', '🎒', '💍', '🥿', '👟', '👞', '😴😴', '🫸', '🫷', '🫶', '☠️', '🫣', '🤥', '🫥', '🫢', '😣', '😝', '😆', '🤪', '😶‍🌫️', '😩', '😈', '😨', '🥳', '🤭', '🤨', '🥰', '👻', '😁😁', '😎', '🥳', '😡', '😭', '😜', '🤣', '🙌', '👊', '🤯', '🫡', '🤝', '🔥', '💥', '🥻', '🥼'];
     const emojiBar = document.getElementById('emojiBar');
     let lastEmojiAt = 0, EMOJI_COOLDOWN = 800;
 
@@ -440,7 +440,7 @@
         leftScoreEl.textContent = 'Score: ' + (res.scores[leftNameEl.textContent] ?? leftScoreEl.textContent.split(': ')[1]);
         rightScoreEl.textContent = 'Score: ' + (res.scores[rightNameEl.textContent] ?? rightScoreEl.textContent.split(': ')[1]);
       }
-//byeeeeeeeeeeeee
+      //byeeeeeeeeeeeee
       if (res.choices) {
         const lChoice = res.choices[leftNameEl.textContent];
         const rChoice = res.choices[rightNameEl.textContent];
