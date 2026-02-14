@@ -10,6 +10,7 @@ const bcrypt = require('bcrypt');
 const cors = require('cors');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
@@ -18,10 +19,15 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+const dbpass = process.env.DB_PASSWORD;
+const g = process.env.GMAIL;
+const gpass = process.env.G_PASS;
+
+
 // =========================
 // MongoDB
 // =========================
-mongoose.connect('mongodb+srv://agentxagent007_db_user:FosugSvNcdI31z6F@cluster7.lgkeolm.mongodb.net/myStoreDB?appName=Cluster7')
+mongoose.connect(dbpass)
 .then(() => console.log("MongoDB Connected"))
 .catch(err => console.log("MongoDB Error:", err));
 
@@ -31,8 +37,8 @@ mongoose.connect('mongodb+srv://agentxagent007_db_user:FosugSvNcdI31z6F@cluster7
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "govendhan4196@gmail.com",
-    pass: "frwq rfmh ddeu rlcf"
+    user: g,
+    pass: gpass
   }
 });
 
