@@ -131,7 +131,14 @@
   </div>
 
   <br><br>
-  <p>developed by govendhan</p>
+<p style="color:white;">
+  Developed by 
+  <a href="mailto:govendhan@example.com?subject=Click to mail"
+     style="color:white; text-decoration:none;">
+     govendhan
+  </a>
+</p>
+
 </div>
 
 <script>
@@ -155,8 +162,8 @@ async function createRoom(){
   }
 
   try{
-    const res = await fetch("https://game-kh41.onrender.com//api/create-room",{
-      method:"POST",
+    const res = await fetch(`${window.location.origin}/api/create-room`, {
+    method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({name,email})
     });
@@ -230,7 +237,7 @@ async function joinRoom(){
     return;
   }
 
-  const res=await fetch("hhttps://game-kh41.onrender.com/api/join-room",{
+  const res = await fetch(`${window.location.origin}/api/create-room`, {
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({roomId:room,passcode:code})
@@ -242,7 +249,7 @@ async function joinRoom(){
     alert(data.error);
     return;
   }
-//--
+
   location.href=`game.html?name=${name}&email=${email}&room=${room}`;
 }
 </script>

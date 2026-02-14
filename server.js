@@ -20,7 +20,6 @@ const g = process.env.GMAIL;
 const gpass = process.env.G_PASS;
 
 
-// mongo 
 
 mongoose.connect(dbpass)
 .then(() => console.log("MongoDB Connected"))
@@ -105,7 +104,7 @@ app.post("/api/create-room", async (req,res)=>{
   res.json({
     roomId,
     passcode,
-    link:`http://localhost:3000/game.html?room=${roomId}&code=${passcode}`
+    link:`https://game-kh41.onrender.com/game.html?room=${roomId}&code=${passcode}`
   });
 });
 
