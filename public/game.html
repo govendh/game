@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8" />
-  <title>RPS — Game</title>
+  <title>Game Hub</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
   <style>
     :root {
@@ -74,9 +74,28 @@
       font-weight: 700
     }
 
+    /* Added Ready Indicator Style */
+    .ready-tag {
+      font-size: 11px;
+      background: rgba(0, 194, 255, 0.2);
+      color: #00c2ff;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-top: 4px;
+      font-weight: bold;
+      text-transform: uppercase;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .ready-tag.visible {
+      opacity: 1;
+    }
+
     .score {
       font-size: 13px;
-      opacity: .9
+      opacity: .9;
+      margin-top: 4px;
     }
 
     .emojiPopup {
@@ -182,16 +201,12 @@
       backdrop-filter: blur(6px);
       z-index: 80;
       overflow-x: auto;
-      /* 👈 added */
       -webkit-overflow-scrolling: touch;
-      /* 👈 smooth scrolling on iOS */
       max-width: 90vw;
-      /* 👈 prevent overflow on small screens */
     }
 
     .emojiBar::-webkit-scrollbar {
       display: none;
-      /* optional - hide scrollbar for cleaner UI */
     }
 
     .emojiBtn {
@@ -203,7 +218,6 @@
       flex: 0 0 auto;
     }
 
-    /* 👈 flex fix for horizontal scroll */
     /* floating emoji */
     .float {
       position: absolute;
@@ -267,14 +281,14 @@
     <div class="playerBox" id="leftBox">
       <div class="avatar" id="leftAvatar">A</div>
       <div class="name" id="leftName">Waiting...</div>
-      <div class="score" id="leftScore">Score: 0</div>
+      <div id="leftReady" class="ready-tag">Ready</div> <div class="score" id="leftScore">Score: 0</div>
       <div class="emojiPopup" id="leftEmoji"></div>
     </div>
 
     <div class="playerBox" id="rightBox">
       <div class="avatar" id="rightAvatar" style="background:linear-gradient(135deg,#00c2ff,#7c5cff)">B</div>
       <div class="name" id="rightName">Waiting...</div>
-      <div class="score" id="rightScore">Score: 0</div>
+      <div id="rightReady" class="ready-tag">Ready</div> <div class="score" id="rightScore">Score: 0</div>
       <div class="emojiPopup" id="rightEmoji"></div>
     </div>
   </div>
@@ -301,28 +315,31 @@
   </div>
 
   <div class="emojiBar" id="emojiBar"></div>
-<footer></footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script>
     // --- setup ---
     const socket = io();
 
     const params = new URLSearchParams(location.search);
-    let name = params.get('name') ;
+    let name = params.get('name');
     const room = params.get('room') || null;
     let email = params.get('email');
+    
     const leftNameEl = document.getElementById('leftName'), rightNameEl = document.getElementById('rightName');
     const leftScoreEl = document.getElementById('leftScore'), rightScoreEl = document.getElementById('rightScore');
     const leftAvatar = document.getElementById('leftAvatar'), rightAvatar = document.getElementById('rightAvatar');
     const leftEmoji = document.getElementById('leftEmoji'), rightEmoji = document.getElementById('rightEmoji');
+    const leftReadyEl = document.getElementById('leftReady'), rightReadyEl = document.getElementById('rightReady');
+    
     const roomLabel = document.getElementById('roomLabel'), meLabel = document.getElementById('meLabel');
     const readyBtn = document.getElementById('readyBtn'), leaveBtn = document.getElementById('leaveBtn');
     const choicesWrap = document.getElementById('choices'), choiceBtns = document.querySelectorAll('.choice');
     const statusEl = document.getElementById('status');
     const resultCircle = document.getElementById('resultCircle'), circleText = document.getElementById('circleText');
 
-    // Emojis
-    const EMOJIS = ['😂', '🧣','🧢', '👒', '🎒', '💍', '🥿', '👟', '👞', '😴😴', '🫸', '🫷', '🫶', '☠️', '🫣', '🤥', '🫥', '🫢', '😣', '😝', '😆', '🤪', '😶‍🌫️', '😩', '😈', '😨', '🥳', '🤭', '🤨', '🥰', '👻', '😁😁', '😎', '🥳', '😡', '😭', '😜', '🤣', '🙌', '👊', '🤯', '🫡', '🤝', '🔥', '💥', '🥻', '🥼'];
+    const EMOJIS = ['😂', '🧣', '🧢', '👒', '🎒', '💍', '🥿', '👟', '👞', '😴😴', '🫸', '🫷', '🫶', '☠️', '🫣', '🤥', '🫥', '🫢', '😣', '😝', '😆', '🤪', '😶‍🌫️', '😩', '😈', '😨', '🥳', '🤭', '🤨', '🥰', '👻', '😁😁', '😎', '🥳', '😡', '😭', '😜', '🤣', '🙌', '👊', '🤯', '🫡', '🤝', '🔥', '💥', '🥻', '🥼'];
     const emojiBar = document.getElementById('emojiBar');
     let lastEmojiAt = 0, EMOJI_COOLDOWN = 800;
 
@@ -342,7 +359,6 @@
     roomLabel.textContent = 'Room: ' + room;
     meLabel.textContent = name;
 
-    // build emoji bar
     EMOJIS.forEach(e => {
       const b = document.createElement('button');
       b.className = 'emojiBtn';
@@ -356,25 +372,11 @@
       emojiBar.appendChild(b);
     });
 
-    function spawnFloat(emoji, targetEl) {
-      if (!targetEl) return;
-      const r = targetEl.getBoundingClientRect();
-      const el = document.createElement('div');
-      el.className = 'float';
-      el.style.left = (r.left + r.width / 2) + 'px';
-      el.style.top = (r.top - 8) + 'px';
-      el.style.transform = 'translate(-50%,0)';
-      el.innerText = emoji;
-      document.body.appendChild(el);
-      setTimeout(() => el.remove(), 1600);
-    }
-
     socket.on('connect', () => {
       myId = socket.id;
-      socket.emit('join-room', { roomId: room,  name , email });
+      socket.emit('join-room', { roomId: room, name, email });
       statusEl.textContent = 'Connected — waiting for players...';
     });
-    
 
     socket.on('no-room', () => {
       alert('No room specified or invalid room. Go back and enter a room code.');
@@ -384,29 +386,31 @@
     socket.on('update-players', ({ players: list }) => {
       players = list;
       const p0 = players[0], p1 = players[1];
+
+      // Reset Ready states first
+      leftReadyEl.classList.remove('visible');
+      rightReadyEl.classList.remove('visible');
+
       if (p0) {
         leftNameEl.textContent = p0.name;
         leftScoreEl.textContent = 'Score: ' + (p0.score || 0);
         leftAvatar.textContent = p0.name.slice(0, 2).toUpperCase();
-        leftEmoji.innerHTML = '';
-        if (p0.ready) leftEmoji.innerHTML = '<div style="font-size:13px;color:#9fb2ff">Ready</div>';
+        if (p0.ready) leftReadyEl.classList.add('visible');
       } else {
         leftNameEl.textContent = 'Waiting...';
         leftScoreEl.textContent = 'Score: 0';
         leftAvatar.textContent = 'A';
-        leftEmoji.innerHTML = '';
       }
+
       if (p1) {
         rightNameEl.textContent = p1.name;
         rightScoreEl.textContent = 'Score: ' + (p1.score || 0);
         rightAvatar.textContent = p1.name.slice(0, 2).toUpperCase();
-        rightEmoji.innerHTML = '';
-        if (p1.ready) rightEmoji.innerHTML = '<div style="font-size:13px;color:#9fb2ff">Ready</div>';
+        if (p1.ready) rightReadyEl.classList.add('visible');
       } else {
         rightNameEl.textContent = 'Waiting...';
         rightScoreEl.textContent = 'Score: 0';
         rightAvatar.textContent = 'B';
-        rightEmoji.innerHTML = '';
       }
 
       if (players.length < 2) {
@@ -416,11 +420,11 @@
       } else {
         statusEl.textContent = 'Both players present — click Ready to begin';
       }
-      if(!email){
-            name = prompt("Enter Name : ");
-           email = prompt("Enter your Gmail for match summary:");
-}
 
+      if (!email && name) {
+        // Only prompt if missing and not already handled
+        // email = prompt("Enter your Gmail for match summary:");
+      }
     });
 
     socket.on('start-countdown', ({ seconds }) => {
@@ -429,6 +433,11 @@
       choiceBtns.forEach(b => b.classList.remove('selected'));
       choicesWrap.style.display = 'flex';
       readyBtn.disabled = true;
+      
+      // Hide ready tags when game starts
+      leftReadyEl.classList.remove('visible');
+      rightReadyEl.classList.remove('visible');
+
       statusEl.textContent = 'Round started — choose your move!';
       startLocalCountdown(seconds);
       circleText.textContent = '';
@@ -444,10 +453,10 @@
       statusEl.textContent = res.text || 'Round over';
 
       if (res.scores) {
-        leftScoreEl.textContent = 'Score: ' + (res.scores[leftNameEl.textContent] ?? leftScoreEl.textContent.split(': ')[1]);
-        rightScoreEl.textContent = 'Score: ' + (res.scores[rightNameEl.textContent] ?? rightScoreEl.textContent.split(': ')[1]);
+        leftScoreEl.textContent = 'Score: ' + (res.scores[leftNameEl.textContent] ?? 0);
+        rightScoreEl.textContent = 'Score: ' + (res.scores[rightNameEl.textContent] ?? 0);
       }
-      //byeeeeeeeeeeeee
+
       if (res.choices) {
         const lChoice = res.choices[leftNameEl.textContent];
         const rChoice = res.choices[rightNameEl.textContent];
@@ -463,55 +472,49 @@
         resultCircle.style.background = '#29a745';
         resultCircle.style.borderColor = '#29a745';
         circleText.innerHTML = `<div style="font-weight:900;font-size:18px">${res.winnerName}</div>`;
-      } else {
-        resultCircle.style.background = 'rgba(255,255,255,0.02)';
-        resultCircle.style.borderColor = 'rgba(255,255,255,0.03)';
-        circleText.textContent = res.text || 'Round over';
+        
+        // --- Confetti Effect ---
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#7c5cff', '#00c2ff', '#ffffff']
+        });
       }
     });
 
     socket.on('receive_emoji', ({ id, name: fromName, emoji }) => {
-      let target = null;
-      if (players[0] && players[0].id === id) target = leftEmoji;
-      else if (players[1] && players[1].id === id) target = rightEmoji;
-      else target = leftEmoji;
+      let targetEmojiContainer = (players[0] && players[0].id === id) ? leftEmoji : rightEmoji;
+      let targetAvatar = (players[0] && players[0].id === id) ? leftAvatar : rightAvatar;
 
-      if (target) {
-        target.innerHTML = `<div style="font-size:14px;opacity:1">${fromName} ${emoji}</div>`;
-        const avatarEl = (target === leftEmoji) ? leftAvatar : rightAvatar;
-        spawnFloatAt(emoji, avatarEl);
+      if (targetEmojiContainer) {
+        targetEmojiContainer.innerHTML = `<div style="font-size:14px;opacity:1">${emoji}</div>`;
+        spawnFloatAt(emoji, targetAvatar);
         setTimeout(() => {
-          const p = players[0] && players[0].id === id ? players[0] : (players[1] && players[1].id === id ? players[1] : null);
-          if (p && p.ready) target.innerHTML = '<div style="font-size:13px;color:#9fb2ff">Ready</div>';
-          else target.innerHTML = '';
+          targetEmojiContainer.innerHTML = '';
         }, 1800);
       }
     });
 
     socket.on('player-left', ({ id, name }) => {
-      statusEl.textContent = `${name} left the room. Waiting for player...`;
+      statusEl.textContent = `${name} left the room.`;
       choicesWrap.style.display = 'none';
       readyBtn.disabled = false;
       circleText.textContent = '';
       resultCircle.style.background = 'rgba(255,255,255,0.02)';
     });
 
-    leaveBtn.onclick = () => {
-      location.href = '/';
-    };
+    leaveBtn.onclick = () => { location.href = '/'; };
 
     readyBtn.onclick = () => {
-  // 🔴 NEW CHECK ADDED
-  if (players.length < 2) {
-    alert("Both players must be present!\nCall someone to join the room.");
-    return;
-  }
-
-  readyBtn.disabled = true;
-  readyBtn.textContent = 'Waiting...';
-  socket.emit('player-ready', { roomId: room });
-};
-
+      if (players.length < 2) {
+        alert("Both players must be present!\nCall someone to join the room.");
+        return;
+      }
+      readyBtn.disabled = true;
+      readyBtn.textContent = 'Waiting...';
+      socket.emit('player-ready', { roomId: room });
+    };
 
     choiceBtns.forEach(b => {
       b.onclick = () => {
@@ -535,7 +538,7 @@
       pop.style.width = '60px'; pop.style.height = '60px';
       pop.style.borderRadius = '8px';
       pop.style.display = 'flex'; pop.style.alignItems = 'center'; pop.style.justifyContent = 'center';
-      pop.style.background = 'rgba(255,255,255,0.02)'; pop.style.color = '#fff';
+      pop.style.background = 'rgba(255,255,255,0.1)'; pop.style.color = '#fff';
       pop.style.zIndex = 999;
       pop.style.fontSize = '24px';
       pop.innerText = choice === 'stone' ? '🪨' : (choice === 'paper' ? '📄' : '✂️');
@@ -565,7 +568,6 @@
           if (!chosen) {
             socket.emit('player-choice', { roomId: room, choice: 'stone' });
             chosen = true;
-            statusEl.textContent = 'No choice — default Stone submitted';
           }
           return;
         }
@@ -573,9 +575,6 @@
         sec--;
       }, 1000);
     }
-
-    circleText.innerText = '—';
-    readyBtn.textContent = 'Ready ✅';
   </script>
 </body>
 
