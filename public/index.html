@@ -103,8 +103,8 @@
     <div class="tab" onclick="showTab('join')">Join Room</div>
   </div>
 
-  <input id="name" placeholder="Your name">
-  <input id="email" placeholder="Your Gmail">
+  <input id="name" placeholder="Your name" autocomplete="off" required>
+  <input id="email" placeholder="Your Gmail" autocomplete="off" required>
 
   <!-- CREATE -->
   <div id="createBox">
@@ -125,8 +125,8 @@
 
   <!-- JOIN -->
   <div id="joinBox" class="hidden">
-    <input id="joinRoom" placeholder="Room ID">
-    <input id="joinCode" placeholder="Passcode">
+    <input id="joinRoom" placeholder="Room ID" autocomplete="off" required>
+    <input id="joinCode" placeholder="Passcode" autocomplete="off" required>
     <button class="btn" onclick="joinRoom()">Join Game</button>
   </div>
 
@@ -237,7 +237,7 @@ async function joinRoom(){
     return;
   }
 
-  const res = await fetch(`${window.location.origin}/api/create-room`, {
+  const res = await fetch(`${window.location.origin}/api/join-room`, {
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({roomId:room,passcode:code})
