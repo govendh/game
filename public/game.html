@@ -500,10 +500,17 @@
     };
 
     readyBtn.onclick = () => {
-      readyBtn.disabled = true;
-      readyBtn.textContent = 'Waiting...';
-      socket.emit('player-ready', { roomId: room });
-    };
+  // 🔴 NEW CHECK ADDED
+  if (players.length < 2) {
+    alert("Both players must be present!\nCall someone to join the room.");
+    return;
+  }
+
+  readyBtn.disabled = true;
+  readyBtn.textContent = 'Waiting...';
+  socket.emit('player-ready', { roomId: room });
+};
+
 
     choiceBtns.forEach(b => {
       b.onclick = () => {
