@@ -155,7 +155,7 @@ async function createRoom(){
   }
 
   try{
-    const res = await fetch("http://localhost:3000/api/create-room",{
+    const res = await fetch("https://game-kh41.onrender.com//api/create-room",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({name,email})
@@ -230,7 +230,7 @@ async function joinRoom(){
     return;
   }
 
-  const res=await fetch("http://localhost:3000/api/join-room",{
+  const res=await fetch("hhttps://game-kh41.onrender.com/api/join-room",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({roomId:room,passcode:code})
