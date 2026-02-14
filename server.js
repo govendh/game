@@ -29,7 +29,9 @@ mongoose.connect(dbpass)
 // MAIL SETUP
 // =========================
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
   auth: {
     user: g,
     pass: gpass
@@ -39,7 +41,6 @@ const transporter = nodemailer.createTransport({
   },
   family: 4
 });
-
 
 // Verify transporter at startup
 transporter.verify()
