@@ -1,5 +1,6 @@
 <!doctype html>
 <html>
+
 <head>
   <meta charset="utf-8" />
   <title>Game Hub</title>
@@ -8,251 +9,260 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
   <style>
-    :root{
-      --bg:#071025;
-      --accent:#7c5cff;
+    :root {
+      --bg: #071025;
+      --accent: #7c5cff;
     }
 
-    *{box-sizing:border-box}
-
-    body{
-      margin:0;
-      min-height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background:linear-gradient(180deg,var(--bg),#08102a);
-      font-family:system-ui;
-      color:white;
-      padding:15px;
+    * {
+      box-sizing: border-box
     }
 
-    .card{
-      width:380px;
-      max-width:100%;
-      padding:24px;
-      border-radius:16px;
-      background:rgba(255,255,255,0.02);
-      box-shadow:0 10px 30px rgba(0,0,0,0.6);
-      text-align:center;
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, var(--bg), #08102a);
+      font-family: system-ui;
+      color: white;
+      padding: 15px;
     }
 
-    h1{margin:0 0 12px 0}
-
-    .tabs{
-      display:flex;
-      margin-bottom:15px;
-      border-bottom:1px solid rgba(255,255,255,.08);
+    .card {
+      width: 380px;
+      max-width: 100%;
+      padding: 24px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.02);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      text-align: center;
     }
 
-    .tab{
-      flex:1;
-      padding:12px;
-      cursor:pointer;
-      opacity:.7;
+    h1 {
+      margin: 0 0 12px 0
     }
 
-    .tab.active{
-      opacity:1;
-      border-bottom:3px solid var(--accent);
-      font-weight:bold;
+    .tabs {
+      display: flex;
+      margin-bottom: 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
     }
 
-    input{
-      width:100%;
-      padding:12px;
-      margin:8px 0;
-      border-radius:10px;
-      border:1px solid rgba(255,255,255,.08);
-      background:transparent;
-      color:white;
+    .tab {
+      flex: 1;
+      padding: 12px;
+      cursor: pointer;
+      opacity: .7;
     }
 
-    .btn{
-      width:100%;
-      padding:13px;
-      border:none;
-      border-radius:12px;
-      margin-top:10px;
-      font-weight:bold;
-      cursor:pointer;
-      background:linear-gradient(90deg,#7c5cff,#00c2ff);
-      color:#071025;
+    .tab.active {
+      opacity: 1;
+      border-bottom: 3px solid var(--accent);
+      font-weight: bold;
     }
 
-    .hidden{display:none}
-
-    .result{
-      margin-top:15px;
-      background:rgba(255,255,255,.03);
-      padding:12px;
-      border-radius:10px;
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, .08);
+      background: transparent;
+      color: white;
     }
 
-    canvas{margin-top:10px}
+    .btn {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 12px;
+      margin-top: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      background: linear-gradient(90deg, #7c5cff, #00c2ff);
+      color: #071025;
+    }
+
+    .hidden {
+      display: none
+    }
+
+    .result {
+      margin-top: 15px;
+      background: rgba(255, 255, 255, .03);
+      padding: 12px;
+      border-radius: 10px;
+    }
+
+    canvas {
+      margin-top: 10px
+    }
   </style>
 </head>
+
 <body>
 
-<div class="card">
+  <div class="card">
 
-  <h1>🎮 Game Hub</h1>
+    <h1>🎮 Game Hub</h1>
 
-  <div class="tabs">
-    <div class="tab active" onclick="showTab('create')">Create Room</div>
-    <div class="tab" onclick="showTab('join')">Join Room</div>
-  </div>
-
-  <input id="name" placeholder="Your name" autocomplete="off" required>
-  <input id="email" placeholder="Your Gmail" autocomplete="off" required>
-
-  <!-- CREATE -->
-  <div id="createBox">
-    <button class="btn" onclick="createRoom()">Create Secure Room</button>
-
-    <div id="result" class="result hidden">
-      <p><b>Room ID:</b> <span id="rid"></span></p>
-      <p><b>Passcode:</b> <span id="rcode"></span></p>
-
-      <button class="btn" onclick="share()">Share WhatsApp</button>
-      <button class="btn" onclick="copyLink()">Copy Link</button>
-      <button class="btn" onclick="downloadQR()">Download QR</button>
-      <button class="btn" onclick="joinCreatedRoom()">Join This Room</button>
-
-      <canvas id="qr"></canvas>
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('create')">Create Room</div>
+      <div class="tab" onclick="showTab('join')">Join Room</div>
     </div>
+
+    <input id="name" placeholder="Your name" autocomplete="off" required>
+    <input id="email" placeholder="Your Gmail" autocomplete="off" required>
+
+    <!-- CREATE -->
+    <div id="createBox">
+      <button class="btn" onclick="createRoom()">Create Secure Room</button>
+
+      <div id="result" class="result hidden">
+        <p><b>Room ID:</b> <span id="rid"></span></p>
+        <p><b>Passcode:</b> <span id="rcode"></span></p>
+
+        <button class="btn" onclick="share()">Share WhatsApp</button>
+        <button class="btn" onclick="copyLink()">Copy Link</button>
+        <button class="btn" onclick="downloadQR()">Download QR</button>
+        <button class="btn" onclick="joinCreatedRoom()">Join This Room</button>
+
+        <canvas id="qr"></canvas>
+      </div>
+    </div>
+
+    <!-- JOIN -->
+    <div id="joinBox" class="hidden">
+      <input id="joinRoom" placeholder="Room ID" autocomplete="off" required>
+      <input id="joinCode" placeholder="Passcode" autocomplete="off" required>
+      <button class="btn" onclick="joinRoom()">Join Game</button>
+    </div>
+
+    <br><br>
+    <p style="color:white;">
+      Developed by
+      <a href="mailto:govendhan@student.tce.edu?subject=Click to mail" style="color:white; text-decoration:none;">
+        govendhan 📩
+      </a>
+    </p>
+
   </div>
 
-  <!-- JOIN -->
-  <div id="joinBox" class="hidden">
-    <input id="joinRoom" placeholder="Room ID" autocomplete="off" required>
-    <input id="joinCode" placeholder="Passcode" autocomplete="off" required>
-    <button class="btn" onclick="joinRoom()">Join Game</button>
-  </div>
+  <script>
+    let link = "", roomId = "", pass = "";
 
-  <br><br>
-<p style="color:white;">
-  Developed by 
-  <a href="mailto:govendhan@example.com?subject=Click to mail"
-     style="color:white; text-decoration:none;">
-     govendhan
-  </a>
-</p>
+    function showTab(tab) {
+      document.getElementById("createBox").classList.toggle("hidden", tab !== "create");
+      document.getElementById("joinBox").classList.toggle("hidden", tab !== "join");
 
-</div>
-
-<script>
-let link="", roomId="", pass="";
-
-function showTab(tab){
-  document.getElementById("createBox").classList.toggle("hidden", tab!=="create");
-  document.getElementById("joinBox").classList.toggle("hidden", tab!=="join");
-
-  document.querySelectorAll(".tab")[0].classList.toggle("active", tab==="create");
-  document.querySelectorAll(".tab")[1].classList.toggle("active", tab==="join");
-}
-
-async function createRoom(){
-  const name=document.getElementById("name").value.trim();
-  const email=document.getElementById("email").value.trim();
-
-  if(!name || !email){
-    alert("Enter name & email");
-    return;
-  }
-
-  try{
-    const res = await fetch(`${window.location.origin}/api/create-room`, {
-    method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({name,email})
-    });
-
-    const data = await res.json();
-    console.log("SERVER:",data);
-
-    if(!data.roomId){
-      alert("Server not responding correctly");
-      return;
+      document.querySelectorAll(".tab")[0].classList.toggle("active", tab === "create");
+      document.querySelectorAll(".tab")[1].classList.toggle("active", tab === "join");
     }
 
-    roomId=data.roomId;
-    pass=data.passcode;
-    link=data.link;
+    async function createRoom() {
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
 
-    document.getElementById("result").classList.remove("hidden");
-    document.getElementById("rid").innerText=roomId;
-    document.getElementById("rcode").innerText=pass;
+      if (!name || !email) {
+        alert("Enter name & email");
+        return;
+      }
 
-    /* HIDE INPUT + CREATE UI AFTER ROOM CREATED */
-    document.getElementById("name").style.display="none";
-    document.getElementById("email").style.display="none";
-    document.querySelector("#createBox > .btn").style.display="none";
+      try {
+        const res = await fetch(`${window.location.origin}/api/create-room`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email })
+        });
 
-    /* HIDE JOIN TAB */
-    document.querySelectorAll(".tab")[1].style.display="none";
-    document.getElementById("joinBox").classList.add("hidden");
+        const data = await res.json();
+        console.log("SERVER:", data);
 
-    QRCode.toCanvas(document.getElementById("qr"),link);
+        if (!data.roomId) {
+          alert("Server not responding correctly");
+          return;
+        }
 
-  }catch(err){
-    alert("Cannot connect to server");
-    console.log(err);
-  }
-}
+        roomId = data.roomId;
+        pass = data.passcode;
+        link = data.link;
 
-function share(){
-  const msg=`Join my game 🎮\nRoom:${roomId}\nCode:${pass}\n${link}`;
-  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
-}
+        document.getElementById("result").classList.remove("hidden");
+        document.getElementById("rid").innerText = roomId;
+        document.getElementById("rcode").innerText = pass;
 
-function copyLink(){
-  navigator.clipboard.writeText(link);
-  alert("Link copied!");
-}
+        /* HIDE INPUT + CREATE UI AFTER ROOM CREATED */
+        document.getElementById("name").style.display = "none";
+        document.getElementById("email").style.display = "none";
+        document.querySelector("#createBox > .btn").style.display = "none";
 
-function downloadQR(){
-  const canvas=document.getElementById("qr");
-  const a=document.createElement("a");
-  a.download="roomQR.png";
-  a.href=canvas.toDataURL();
-  a.click();
-}
+        /* HIDE JOIN TAB */
+        document.querySelectorAll(".tab")[1].style.display = "none";
+        document.getElementById("joinBox").classList.add("hidden");
 
-function joinCreatedRoom(){
-  document.getElementById("joinRoom").value = roomId;
-  document.getElementById("joinCode").value = pass;
-  showTab('join');
-  joinRoom();
-}
+        QRCode.toCanvas(document.getElementById("qr"), link);
 
-async function joinRoom(){
-  const name=document.getElementById("name").value.trim();
-  const email=document.getElementById("email").value.trim();
-  const room=document.getElementById("joinRoom").value.trim();
-  const code=document.getElementById("joinCode").value.trim();
+      } catch (err) {
+        alert("Cannot connect to server");
+        console.log(err);
+      }
+    }
 
-  if(!room || !code){
-    alert("Enter room & passcode");
-    return;
-  }
+    function share() {
+      const msg = `Join my game 🎮\nRoom:${roomId}\nCode:${pass}\n${link}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
+    }
 
-  const res = await fetch(`${window.location.origin}/api/join-room`, {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({roomId:room,passcode:code})
-  });
+    function copyLink() {
+      navigator.clipboard.writeText(link);
+      alert("Link copied!");
+    }
 
-  const data=await res.json();
+    function downloadQR() {
+      const canvas = document.getElementById("qr");
+      const a = document.createElement("a");
+      a.download = "roomQR.png";
+      a.href = canvas.toDataURL();
+      a.click();
+    }
 
-  if(!data.success){
-    alert(data.error);
-    return;
-  }
+    function joinCreatedRoom() {
+      document.getElementById("joinRoom").value = roomId;
+      document.getElementById("joinCode").value = pass;
+      showTab('join');
+      joinRoom();
+    }
 
-  location.href=`game.html?name=${name}&email=${email}&room=${room}`;
-}
-</script>
+    async function joinRoom() {
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const room = document.getElementById("joinRoom").value.trim();
+      const code = document.getElementById("joinCode").value.trim();
+
+      if (!room || !code) {
+        alert("Enter room & passcode");
+        return;
+      }
+
+      const res = await fetch(`${window.location.origin}/api/join-room`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomId: room, passcode: code })
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        alert(data.error);
+        return;
+      }
+
+      location.href = `game.html?name=${name}&email=${email}&room=${room}`;
+    }
+  </script>
 
 </body>
+
 </html>

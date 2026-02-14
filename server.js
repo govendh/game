@@ -1,3 +1,5 @@
+const { Resend } = require('resend');
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -10,7 +12,7 @@ require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
-
+const resend = new Resend(process.env.PASS);
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
