@@ -310,6 +310,7 @@
     const params = new URLSearchParams(location.search);
     const name = params.get('name') || ('Player' + Math.floor(Math.random() * 99));
     const room = params.get('room') || null;
+    const email = params.get('email');
     const leftNameEl = document.getElementById('leftName'), rightNameEl = document.getElementById('rightName');
     const leftScoreEl = document.getElementById('leftScore'), rightScoreEl = document.getElementById('rightScore');
     const leftAvatar = document.getElementById('leftAvatar'), rightAvatar = document.getElementById('rightAvatar');
@@ -370,9 +371,10 @@
 
     socket.on('connect', () => {
       myId = socket.id;
-      socket.emit('join-room', { roomId: room, name });
+      socket.emit('join-room', { roomId: room,  name , email });
       statusEl.textContent = 'Connected — waiting for players...';
     });
+    
 
     socket.on('no-room', () => {
       alert('No room specified or invalid room. Go back and enter a room code.');
@@ -414,6 +416,10 @@
       } else {
         statusEl.textContent = 'Both players present — click Ready to begin';
       }
+      if(!email){
+  email = prompt("Enter your Gmail for match summary:");
+}
+
     });
 
     socket.on('start-countdown', ({ seconds }) => {

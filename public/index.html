@@ -2,37 +2,250 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Join Game — RPS</title>
+  <title>Game Hub</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
   <style>
-    :root{--bg1:#071025;--accent:#7c5cff}
+    :root{
+      --bg:#071025;
+      --accent:#7c5cff;
+    }
+
     *{box-sizing:border-box}
-    body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,var(--bg1),#08102a);font-family:system-ui,-apple-system,Segoe UI,Roboto;color:#fff}
-    .card{width:360px;padding:26px;border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));box-shadow:0 10px 30px rgba(0,0,0,0.6);text-align:center}
-    h1{margin:0 0 8px 0;font-size:20px}
-    input{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:#fff;margin:8px 0}
-    .btn{width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent),#00c2ff);color:#06101b;font-weight:700;cursor:pointer;margin-top:6px}
-    .muted{font-size:13px;color:#b9c2d9;margin-top:10px}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:linear-gradient(180deg,var(--bg),#08102a);
+      font-family:system-ui;
+      color:white;
+      padding:15px;
+    }
+
+    .card{
+      width:380px;
+      max-width:100%;
+      padding:24px;
+      border-radius:16px;
+      background:rgba(255,255,255,0.02);
+      box-shadow:0 10px 30px rgba(0,0,0,0.6);
+      text-align:center;
+    }
+
+    h1{margin:0 0 12px 0}
+
+    .tabs{
+      display:flex;
+      margin-bottom:15px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+
+    .tab{
+      flex:1;
+      padding:12px;
+      cursor:pointer;
+      opacity:.7;
+    }
+
+    .tab.active{
+      opacity:1;
+      border-bottom:3px solid var(--accent);
+      font-weight:bold;
+    }
+
+    input{
+      width:100%;
+      padding:12px;
+      margin:8px 0;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.08);
+      background:transparent;
+      color:white;
+    }
+
+    .btn{
+      width:100%;
+      padding:13px;
+      border:none;
+      border-radius:12px;
+      margin-top:10px;
+      font-weight:bold;
+      cursor:pointer;
+      background:linear-gradient(90deg,#7c5cff,#00c2ff);
+      color:#071025;
+    }
+
+    .hidden{display:none}
+
+    .result{
+      margin-top:15px;
+      background:rgba(255,255,255,.03);
+      padding:12px;
+      border-radius:10px;
+    }
+
+    canvas{margin-top:10px}
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>🪨📄✂️ RPS — Online</h1>
-    <p style="opacity:.9">Enter a name and a room code. Share the room with your friend.</p>
-    <input id="name" placeholder="Your name (e.g. Alice)" maxlength="20"/>
-    <input id="room" placeholder="Room code (e.g. game123)" maxlength="20"/>
-    <button class="btn" onclick="join()">Join / Create Room</button>
-    <div class="muted">If room exists your friend will join; otherwise this creates a new room code.</div>
+
+<div class="card">
+
+  <h1>🎮 Game Hub</h1>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('create')">Create Room</div>
+    <div class="tab" onclick="showTab('join')">Join Room</div>
   </div>
 
-  <script>
-    function join(){
-      const name = (document.getElementById('name').value || '').trim();
-      const room = (document.getElementById('room').value || '').trim();
-      if(!room) return alert('Please enter a room code (e.g. game123)');
-      const finalName = name || ('Player' + Math.floor(Math.random()*999));
-      location.href = `game.html?name=${encodeURIComponent(finalName)}&room=${encodeURIComponent(room)}`;
+  <input id="name" placeholder="Your name">
+  <input id="email" placeholder="Your Gmail">
+
+  <!-- CREATE -->
+  <div id="createBox">
+    <button class="btn" onclick="createRoom()">Create Secure Room</button>
+
+    <div id="result" class="result hidden">
+      <p><b>Room ID:</b> <span id="rid"></span></p>
+      <p><b>Passcode:</b> <span id="rcode"></span></p>
+
+      <button class="btn" onclick="share()">Share WhatsApp</button>
+      <button class="btn" onclick="copyLink()">Copy Link</button>
+      <button class="btn" onclick="downloadQR()">Download QR</button>
+      <button class="btn" onclick="joinCreatedRoom()">Join This Room</button>
+
+      <canvas id="qr"></canvas>
+    </div>
+  </div>
+
+  <!-- JOIN -->
+  <div id="joinBox" class="hidden">
+    <input id="joinRoom" placeholder="Room ID">
+    <input id="joinCode" placeholder="Passcode">
+    <button class="btn" onclick="joinRoom()">Join Game</button>
+  </div>
+
+  <br><br>
+  <p>developed by govendhan</p>
+</div>
+
+<script>
+let link="", roomId="", pass="";
+
+function showTab(tab){
+  document.getElementById("createBox").classList.toggle("hidden", tab!=="create");
+  document.getElementById("joinBox").classList.toggle("hidden", tab!=="join");
+
+  document.querySelectorAll(".tab")[0].classList.toggle("active", tab==="create");
+  document.querySelectorAll(".tab")[1].classList.toggle("active", tab==="join");
+}
+
+async function createRoom(){
+  const name=document.getElementById("name").value.trim();
+  const email=document.getElementById("email").value.trim();
+
+  if(!name || !email){
+    alert("Enter name & email");
+    return;
+  }
+
+  try{
+    const res = await fetch("http://localhost:3000/api/create-room",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({name,email})
+    });
+
+    const data = await res.json();
+    console.log("SERVER:",data);
+
+    if(!data.roomId){
+      alert("Server not responding correctly");
+      return;
     }
-  </script>
+
+    roomId=data.roomId;
+    pass=data.passcode;
+    link=data.link;
+
+    document.getElementById("result").classList.remove("hidden");
+    document.getElementById("rid").innerText=roomId;
+    document.getElementById("rcode").innerText=pass;
+
+    /* HIDE INPUT + CREATE UI AFTER ROOM CREATED */
+    document.getElementById("name").style.display="none";
+    document.getElementById("email").style.display="none";
+    document.querySelector("#createBox > .btn").style.display="none";
+
+    /* HIDE JOIN TAB */
+    document.querySelectorAll(".tab")[1].style.display="none";
+    document.getElementById("joinBox").classList.add("hidden");
+
+    QRCode.toCanvas(document.getElementById("qr"),link);
+
+  }catch(err){
+    alert("Cannot connect to server");
+    console.log(err);
+  }
+}
+
+function share(){
+  const msg=`Join my game 🎮\nRoom:${roomId}\nCode:${pass}\n${link}`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
+}
+
+function copyLink(){
+  navigator.clipboard.writeText(link);
+  alert("Link copied!");
+}
+
+function downloadQR(){
+  const canvas=document.getElementById("qr");
+  const a=document.createElement("a");
+  a.download="roomQR.png";
+  a.href=canvas.toDataURL();
+  a.click();
+}
+
+function joinCreatedRoom(){
+  document.getElementById("joinRoom").value = roomId;
+  document.getElementById("joinCode").value = pass;
+  showTab('join');
+  joinRoom();
+}
+
+async function joinRoom(){
+  const name=document.getElementById("name").value.trim();
+  const email=document.getElementById("email").value.trim();
+  const room=document.getElementById("joinRoom").value.trim();
+  const code=document.getElementById("joinCode").value.trim();
+
+  if(!room || !code){
+    alert("Enter room & passcode");
+    return;
+  }
+
+  const res=await fetch("http://localhost:3000/api/join-room",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({roomId:room,passcode:code})
+  });
+
+  const data=await res.json();
+
+  if(!data.success){
+    alert(data.error);
+    return;
+  }
+
+  location.href=`game.html?name=${name}&email=${email}&room=${room}`;
+}
+</script>
+
 </body>
 </html>
