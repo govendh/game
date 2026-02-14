@@ -1,7 +1,3 @@
-// =========================
-// server.js (FINAL - SEND MAIL ON ONE LEAVE + SAFE + LOGS)
-// =========================
-
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -24,9 +20,8 @@ const g = process.env.GMAIL;
 const gpass = process.env.G_PASS;
 
 
-// =========================
-// MongoDB
-// =========================
+// mongo 
+
 mongoose.connect(dbpass)
 .then(() => console.log("MongoDB Connected"))
 .catch(err => console.log("MongoDB Error:", err));
