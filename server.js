@@ -7,47 +7,23 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const cors = require('cors');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
-const resend = new Resend(process.env.PASS);
+
+// RESEND SETUP
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
 const dbpass = process.env.DB_PASSWORD;
-const g = process.env.GMAIL;
-const gpass = process.env.G_PASS;
-
-
 
 mongoose.connect(dbpass)
 .then(() => console.log("MongoDB Connected"))
 .catch(err => console.log("MongoDB Error:", err));
-
-// =========================
-// MAIL SETUP
-// =========================
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: g,
-    pass: gpass
-  },
-  tls: {
-    rejectUnauthorized: false
-  },
-  family: 4
-});
-
-// Verify transporter at startup
-transporter.verify()
-  .then(() => console.log("Mailer ready"))
-  .catch(err => console.log("Mailer error:", err.message));
 
 // =========================
 // Schemas
@@ -153,7 +129,7 @@ function cardHTML(title, subtitle, p1, p2, s1, s2, rounds, color) {
 
 async function sendMatchEmails(p1, p2, s1, s2, rounds, reason){
   if(!p1?.email || !p2?.email){
-    console.log("Mail skipped: missing recipient(s)", p1?.email, p2?.email);
+    console.log("Mail skipped: missing recipient(s)");
     return;
   }
 
@@ -162,22 +138,19 @@ async function sendMatchEmails(p1, p2, s1, s2, rounds, reason){
   if(s1>s2){ winner=p1; loser=p2; }
   else if(s2>s1){ winner=p2; loser=p1; }
   else {
-    // tie → remaining player wins by forfeit if reason=leave
     if(reason === "leave" || reason === "disconnect"){
-      // pick p1 as winner by default if equal & someone left;
-      // but better: keep as draw if you prefer
       winner = p1;
       loser = p2;
     }
   }
 
   try{
+    // DRAW
     if(!winner){
-      console.log("Sending DRAW mail...");
-      await transporter.sendMail({
-        to:`${p1.email},${p2.email}`,
-        subject:"🤝 Match Draw!",
-        text:`Match Draw\nScore ${s1}-${s2}\nRounds ${rounds}`,
+      await resend.emails.send({
+        from: "Game Arena <onboarding@resend.dev>",
+        to: [p1.email, p2.email],
+        subject: "🤝 Match Draw!",
         html: cardHTML(
           "🤝 Match Draw",
           "Great game! You both were evenly matched.",
@@ -187,12 +160,11 @@ async function sendMatchEmails(p1, p2, s1, s2, rounds, reason){
       return;
     }
 
-    console.log("Sending WIN/LOSE mails...");
-    // Winner
-    await transporter.sendMail({
-      to:winner.email,
-      subject:"🏆 You WON!",
-      text:`You defeated ${loser.name}\nScore ${s1}-${s2}\nRounds ${rounds}`,
+    // WINNER
+    await resend.emails.send({
+      from: "Game Arena <onboarding@resend.dev>",
+      to: [winner.email],
+      subject: "🏆 You WON!",
       html: cardHTML(
         "🏆 Victory!",
         `You defeated ${loser.name}${reason ? ` (${reason})` : ""}`,
@@ -200,11 +172,11 @@ async function sendMatchEmails(p1, p2, s1, s2, rounds, reason){
       )
     });
 
-    // Loser
-    await transporter.sendMail({
-      to:loser.email,
-      subject:"💪 Try Again!",
-      text:`You lost this match.\nScore ${s1}-${s2}\nRematch soon!`,
+    // LOSER
+    await resend.emails.send({
+      from: "Game Arena <onboarding@resend.dev>",
+      to: [loser.email],
+      subject: "💪 Try Again!",
       html: cardHTML(
         "💪 Rematch Again!",
         "Good game! You can win the next match.",
@@ -212,9 +184,9 @@ async function sendMatchEmails(p1, p2, s1, s2, rounds, reason){
       )
     });
 
-    console.log("Mails sent.");
+    console.log("Emails sent via Resend");
   }catch(err){
-    console.log("Mail send error:", err.message);
+    console.log("Resend error:", err.message);
   }
 }
 
@@ -288,35 +260,22 @@ io.on('connection',(socket)=>{
       io.to(roomId).emit('round-result',result);
 
       r.choices={};
-      r.ready=r.players.reduce((a,id)=>{a[id]=false;return a;},{});
+      r.ready=r.players.reduce((a,id)=>{a[id]=false;return a;},{}); 
       emitPlayers(roomId);
     }
   });
 
-  socket.on('send_emoji', ({ roomId, emoji }) => {
-    if (!rooms[roomId]) return;
-    const payload = { id: socket.id, name: socket.data.name, emoji };
-    // broadcast to everyone in room (including sender) for consistent display
-    io.to(roomId).emit('receive_emoji', payload);
-  });
-
-  // LEAVE / DISCONNECT
   socket.on('disconnect', async ()=>{
     for(const rid in rooms){
       const r=rooms[rid];
       if(!r.players.includes(socket.id)) continue;
 
-      // If already finished, just remove and delete room if empty
       if(r.finished){
         r.players = r.players.filter(id=>id!==socket.id);
-        if(r.players.length===0){
-          delete rooms[rid];
-          console.log("Room deleted:", rid);
-        }
+        if(r.players.length===0) delete rooms[rid];
         continue;
       }
 
-      // Compute match result NOW (on first leave)
       const ids = Object.keys(r.scores);
       const p1 = ids[0];
       const p2 = ids[1];
@@ -329,7 +288,6 @@ io.on('connection',(socket)=>{
       const e1 = r.emails[p1];
       const e2 = r.emails[p2];
 
-      // Determine who left
       const leftId = socket.id;
       const otherId = ids.find(id=>id!==leftId);
 
@@ -337,11 +295,8 @@ io.on('connection',(socket)=>{
       if(s1!==s2){
         winnerName = s1>s2 ? n1 : n2;
       }else{
-        // tie → remaining player wins by forfeit
         winnerName = r.names[otherId];
       }
-
-      console.log("Match ending due to leave. Winner:", winnerName);
 
       try{
         await History.create({
@@ -352,26 +307,21 @@ io.on('connection',(socket)=>{
           reason:"Player left",
           totalRounds:r.rounds
         });
-        console.log("History saved.");
       }catch(err){
         console.log("History save error:", err.message);
       }
 
-      // Send emails once
       await sendMatchEmails(
         {name:n1,email:e1},
         {name:n2,email:e2},
         s1,s2,r.rounds,"leave"
       );
 
-      // Mark finished and remove leaver
       r.finished = true;
       r.players = r.players.filter(id=>id!==socket.id);
 
-      // If both leave → delete room
       if(r.players.length===0){
         delete rooms[rid];
-        console.log("Room deleted:", rid);
       }
     }
   });
