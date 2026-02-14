@@ -33,8 +33,13 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: g,
     pass: gpass
-  }
+  },
+  tls: {
+    rejectUnauthorized: false
+  },
+  family: 4
 });
+
 
 // Verify transporter at startup
 transporter.verify()

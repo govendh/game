@@ -308,9 +308,9 @@
     const socket = io();
 
     const params = new URLSearchParams(location.search);
-    const name = params.get('name') || ('Player' + Math.floor(Math.random() * 99));
+    let name = params.get('name') ;
     const room = params.get('room') || null;
-    const email = params.get('email');
+    let email = params.get('email');
     const leftNameEl = document.getElementById('leftName'), rightNameEl = document.getElementById('rightName');
     const leftScoreEl = document.getElementById('leftScore'), rightScoreEl = document.getElementById('rightScore');
     const leftAvatar = document.getElementById('leftAvatar'), rightAvatar = document.getElementById('rightAvatar');
@@ -417,8 +417,8 @@
         statusEl.textContent = 'Both players present — click Ready to begin';
       }
       if(!email){
-          const name = prompt("Enter your Name :");
-          email = prompt("Enter your Gmail  for match summary :");
+            name = prompt("Enter Name : ");
+           email = prompt("Enter your Gmail for match summary:");
 }
 
     });
